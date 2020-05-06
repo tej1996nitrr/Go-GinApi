@@ -2,9 +2,13 @@ package main
 
 import (
 	controller "GoGinWebServices/controllers"
+	"GoGinWebServices/middlewares"
 	service "GoGinWebServices/services"
+	"io"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	gindump "github.com/tpkeeper/gin-dump"
 )
 
 var (
@@ -12,9 +16,15 @@ var (
 	videoController controller.VideoController = controller.New(videoService)
 )
 
-// Joke contains information about a single Joke
+func setUpLogOutput() {
+	f, _ := os.Create("gin.log")
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+}
+
 func main() {
-	server := gin.Default()
+	setUpLogOutput()
+	server := gin.New()
+	server.Use(gin.Recovery(), middlewares.Logger(), middlewares.BasicAuth(), gindump.Dump())
 	server.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
